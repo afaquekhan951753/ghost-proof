@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anti-Ghost Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0d0d1a;
+    --card: #1a1a2e;
+    --accent: #e94560;
+    --accent2: #533483;
+    --green: #00c9a7;
+    --yellow: #ffd166;
+    --orange: #f4845f;
+    --text: #e0e0e0;
+    --muted: #888;
+    --border: #2a2a40;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+    font-size: 13px;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .logo-icon {
+    font-size: 22px;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  .logo h1 {
+    font-size: 16px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #e94560, #533483);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .logo p { font-size: 11px; color: var(--muted); }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 14px;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border-radius: 10px;
+    padding: 12px;
+    border: 1px solid var(--border);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(233,69,96,0.2); }
+
+  .stat-card .num {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-card .label { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .stat-card.urgent .num { color: var(--accent); }
+  .stat-card.won .num { color: var(--green); }
+  .stat-card.total .num { color: #7c83fd; }
+  .stat-card.talks .num { color: var(--yellow); }
+
+  /* ── SECTION ── */
+  .section { padding: 0 14px 14px; }
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .badge {
+    background: var(--accent);
+    color: white;
+    border-radius: 20px;
+    padding: 1px 7px;
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  /* ── PROPOSAL CARD ── */
+  .proposal-card {
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+
+  .proposal-card:hover { border-color: var(--accent); box-shadow: 0 0 20px rgba(233, 69, 96, 0.1); }
+
+  .proposal-card.urgent { border-left: 3px solid var(--accent); }
+  .proposal-card.warning { border-left: 3px solid var(--orange); }
+  .proposal-card.due { border-left: 3px solid var(--yellow); }
+
+  .card-header {
+    padding: 12px 14px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .client-name {
+    font-weight: 700;
+    font-size: 14px;
+    color: #fff;
+  }
+
+  .project-title {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+
+  .amount-badge {
+    background: rgba(0, 201, 167, 0.15);
+    color: var(--green);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .card-meta {
+    padding: 0 14px 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .meta-pill {
+    background: rgba(255,255,255,0.06);
+    border-radius: 20px;
+    padding: 3px 9px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .meta-pill.fire { background: rgba(233,69,96,0.15); color: var(--accent); }
+  .meta-pill.type-friendly { background: rgba(0, 201, 167, 0.12); color: var(--green); }
+  .meta-pill.type-professional { background: rgba(124, 131, 253, 0.15); color: #7c83fd; }
+  .meta-pill.type-breakup { background: rgba(233,69,96,0.15); color: var(--accent); }
+
+  /* ── DRAFT PREVIEW ── */
+  .draft-toggle {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: none;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    padding: 8px 14px;
+    text-align: left;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+  }
+  .draft-toggle:hover { background: rgba(255,255,255,0.07); color: var(--text); }
+
+  .draft-box {
+    display: none;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.3);
+  }
+
+  .draft-box.visible { display: block; }
+
+  .draft-text {
+    font-size: 11px;
+    color: #b0b0b0;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    max-height: 150px;
+    overflow-y: auto;
+    font-family: 'Inter', monospace;
+  }
+
+  /* ── ACTION BUTTONS ── */
+  .card-actions {
+    padding: 10px 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+
+  .btn:hover { transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #c0392b);
+    color: white;
+    box-shadow: 0 2px 10px rgba(233,69,96,0.3);
+  }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.07);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+  .btn-generate {
+    background: linear-gradient(135deg, #533483, #7c83fd);
+    color: white;
+    box-shadow: 0 2px 10px rgba(83,52,131,0.3);
+    grid-column: 1 / -1;
+  }
+
+  /* ── REFRESH BAR ── */
+  .action-bar {
+    padding: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    position: sticky;
+    bottom: 0;
+    background: var(--bg);
+  }
+
+  .btn-refresh {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-refresh:hover { background: rgba(255,255,255,0.12); }
+
+  .btn-run-all {
+    background: linear-gradient(135deg, var(--accent), #c0392b);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    box-shadow: 0 2px 10px rgba(233,69,96,0.4);
+  }
+
+  .btn-run-all:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(233,69,96,0.5); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+  }
+
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--green); }
+  .empty-state p { font-size: 12px; color: var(--muted); }
+
+  /* ── LOADING ── */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--card);
+    border: 1px solid var(--green);
+    color: var(--green);
+    padding: 10px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 999;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ── COPY BUTTON ── */
+  .copy-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    margin-top: 8px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+  }
+
+  .copy-btn:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <span class="logo-icon">👻</span>
+    <div>
+      <h1>Anti-Ghost Automator</h1>
+      <p>Stop letting deals die in the inbox</p>
+    </div>
+  </div>
+</div>
+
+<div id="content">
+  <div class="loading">
+    <div class="spinner"></div>
+    <span>Loading your proposals...</span>
+  </div>
+</div>
+
+<div class="action-bar">
+  <button class="btn-refresh" onclick="loadData()">🔄 Refresh</button>
+  <button class="btn-run-all" onclick="runAll()">⚡ Run All Follow-ups</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let dashData = null;
+
+  window.onload = () => loadData();
+
+  function loadData() {
+    document.getElementById('content').innerHTML = `<div class="loading"><div class="spinner"></div><span>Loading...</span></div>`;
+    google.script.run
+      .withSuccessHandler(renderDashboard)
+      .withFailureHandler(err => showError(err.message))
+      .getDashboardData();
+  }
+
+  function renderDashboard(data) {
+    dashData = data;
+    if (data.error) { showError(data.error); return; }
+
+    const { stats, dueList } = data;
+    let html = `
+      <div class="stats-grid">
+        <div class="stat-card urgent">
+          <div class="num">${stats.dueToday}</div>
+          <div class="label">🔥 Due Today</div>
+        </div>
+        <div class="stat-card total">
+          <div class="num">${stats.total}</div>
+          <div class="label">📋 Total Proposals</div>
+        </div>
+        <div class="stat-card won">
+          <div class="num">${stats.won}</div>
+          <div class="label">✅ Won</div>
+        </div>
+        <div class="stat-card talks">
+          <div class="num">${stats.inTalks}</div>
+          <div class="label">🤝 In Talks</div>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">
+          🔥 Needs Follow-up
+          ${dueList.length > 0 ? `<span class="badge">${dueList.length}</span>` : ''}
+        </div>
+    `;
+
+    if (dueList.length === 0) {
+      html += `
+        <div class="empty-state">
+          <div class="icon">🎉</div>
+          <h3>You're all caught up!</h3>
+          <p>No follow-ups due today. Check back in a few days.</p>
+        </div>`;
+    } else {
+      dueList.forEach((item, idx) => {
+        const urgencyClass = item.days >= 10 ? 'urgent' : item.days >= 6 ? 'warning' : 'due';
+        const typeClass = item.msgType === 'Friendly' ? 'type-friendly'
+                        : item.msgType === 'Professional' ? 'type-professional'
+                        : 'type-breakup';
+        const hasDraft = item.draft && item.draft.trim().length > 0;
+
+        html += `
+          <div class="proposal-card ${urgencyClass}" id="card-${idx}">
+            <div class="card-header">
+              <div>
+                <div class="client-name">${item.client}</div>
+                <div class="project-title">${item.project}</div>
+              </div>
+              ${item.amount ? `<div class="amount-badge">$${Number(item.amount).toLocaleString()}</div>` : ''}
+            </div>
+            <div class="card-meta">
+              <span class="meta-pill fire">⏰ ${item.days}d since contact</span>
+              <span class="meta-pill">#${item.followupCount + 1} follow-up</span>
+              <span class="meta-pill ${typeClass}">${item.msgType}</span>
+            </div>
+            <button class="draft-toggle" onclick="toggleDraft(${idx})">
+              ✉️ <span id="draft-toggle-text-${idx}">${hasDraft ? 'View Draft' : 'Generate Draft'}</span>
+              <span id="draft-arrow-${idx}">▸</span>
+            </button>
+            <div class="draft-box" id="draft-box-${idx}">
+              ${hasDraft
+                ? `<div class="draft-text" id="draft-text-${idx}">${escapeHtml(cleanDraft(item.draft))}</div>
+                   <button class="copy-btn" onclick="copyDraft(${idx})">📋 Copy to Clipboard</button>`
+                : `<div style="color:var(--muted); font-size:12px;">Click "Generate Draft" to create message</div>`
+              }
+            </div>
+            <div class="card-actions">
+              <button class="btn btn-primary" onclick="markDone(${idx}, ${item.row})">
+                ✅ Mark Sent
+              </button>
+              <button class="btn btn-secondary" onclick="generateDraft(${idx}, ${item.row})">
+                ✨ ${hasDraft ? 'Regenerate' : 'Generate'}
+              </button>
+            </div>
+          </div>`;
+      });
+    }
+
+    html += '</div>';
+    document.getElementById('content').innerHTML = html;
+  }
+
+  function cleanDraft(draft) {
+    return draft.replace(/^\[.*?\]\n/, '');
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function toggleDraft(idx) {
+    const box = document.getElementById(`draft-box-${idx}`);
+    const arrow = document.getElementById(`draft-arrow-${idx}`);
+    const isVisible = box.classList.toggle('visible');
+    arrow.textContent = isVisible ? '▾' : '▸';
+
+    if (isVisible && dashData && dashData.dueList[idx]) {
+      const item = dashData.dueList[idx];
+      if (!item.draft || !item.draft.trim()) {
+        generateDraft(idx, item.row);
+      }
+    }
+  }
+
+  function generateDraft(idx, rowIndex) {
+    const box = document.getElementById(`draft-box-${idx}`);
+    box.classList.add('visible');
+    box.innerHTML = `<div style="color:var(--muted); font-size:12px;">✨ Generating draft...</div>`;
+
+    google.script.run
+      .withSuccessHandler(draft => {
+        box.innerHTML = `<div class="draft-text" id="draft-text-${idx}">${escapeHtml(draft)}</div>
+                         <button class="copy-btn" onclick="copyDraft(${idx})">📋 Copy to Clipboard</button>`;
+        const toggleText = document.getElementById(`draft-toggle-text-${idx}`);
+        if (toggleText) toggleText.textContent = 'View Draft';
+        if (dashData && dashData.dueList[idx]) dashData.dueList[idx].draft = draft;
+      })
+      .withFailureHandler(err => {
+        box.innerHTML = `<div style="color:var(--accent); font-size:12px;">Error: ${err.message}</div>`;
+      })
+      .generateDraftForRow(rowIndex);
+  }
+
+  function copyDraft(idx) {
+    const el = document.getElementById(`draft-text-${idx}`);
+    if (!el) return;
+    const text = el.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('✅ Copied to clipboard!');
+    }).catch(() => {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast('✅ Copied!');
+    });
+  }
+
+  function markDone(idx, rowIndex) {
+    const card = document.getElementById(`card-${idx}`);
+    if (card) {
+      card.style.opacity = '0.5';
+      card.style.pointerEvents = 'none';
+    }
+
+    google.script.run
+      .withSuccessHandler(data => {
+        showToast('✅ Marked as sent! Next follow-up scheduled.');
+        renderDashboard(data);
+      })
+      .withFailureHandler(err => {
+        showToast('❌ Error: ' + err.message);
+        if (card) { card.style.opacity = '1'; card.style.pointerEvents = 'auto'; }
+      })
+      .markRowFollowedUp(rowIndex);
+  }
+
+  function runAll() {
+    document.querySelector('.btn-run-all').textContent = '⏳ Running...';
+    document.querySelector('.btn-run-all').disabled = true;
+
+    google.script.run
+      .withSuccessHandler(() => {
+        showToast('⚡ All follow-ups generated!');
+        document.querySelector('.btn-run-all').textContent = '⚡ Run All Follow-ups';
+        document.querySelector('.btn-run-all').disabled = false;
+        loadData();
+      })
+      .withFailureHandler(err => {
+        showToast('❌ ' + err.message);
+        document.querySelector('.btn-run-all').textContent = '⚡ Run All Follow-ups';
+        document.querySelector('.btn-run-all').disabled = false;
+      })
+      .generateAllFollowups();
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  function showError(msg) {
+    document.getElementById('content').innerHTML = `
+      <div class="empty-state">
+        <div class="icon">⚠️</div>
+        <h3>Setup Required</h3>
+        <p>${msg || 'Please run "Anti-Ghost > First Time Setup" from the menu.'}</p>
+      </div>`;
+  }
+</script>
+</body>
+</html>
