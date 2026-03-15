@@ -28,11 +28,10 @@ const COL = {
 // ── SETUP ─────────────────────────────────────────────────────
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu("🚀 Anti-Ghost")
+  ui.createMenu("👻 Ghost-Proof")
     .addItem("📋 Open Dashboard", "openDashboard")
     .addSeparator()
     .addItem("⚡ Generate Follow-ups (Run Now)", "generateAllFollowups")
-    .addItem("📧 Send Draft Email", "sendSelectedDraft")
     .addSeparator()
     .addItem("🔄 Refresh Heatmap", "refreshHeatmap")
     .addItem("⚙️ Settings", "openSettings")
@@ -176,13 +175,14 @@ function setupLogSheet(ss) {
 }
 
 // ── CORE LOGIC ────────────────────────────────────────────────
-function generateAllFollowups() {
+// silent=true when called from a time-based trigger (no UI allowed in triggers)
+function generateAllFollowups(silent) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_NAME);
   const settingsSheet = ss.getSheetByName(SETTINGS_SHEET);
 
   if (!sheet || !settingsSheet) {
-    SpreadsheetApp.getUi().alert("Please run First Time Setup first!");
+    if (!silent) SpreadsheetApp.getUi().alert("Please run First Time Setup first!");
     return;
   }
 
@@ -232,11 +232,13 @@ function generateAllFollowups() {
 
   refreshHeatmap();
 
-  const msg = updatedCount > 0
-    ? `✅ Done! Generated follow-up drafts for ${updatedCount} proposal(s).\n\nCheck the "Auto-Draft Message" column to review and send.`
-    : `✅ All good! No follow-ups due today. Check back in a couple of days.`;
-
-  SpreadsheetApp.getUi().alert(msg);
+  // Only show alert when run manually from the menu (not from the daily trigger)
+  if (!silent) {
+    const msg = updatedCount > 0
+      ? `✅ Done! Generated follow-up drafts for ${updatedCount} proposal(s).\n\nCheck the "Auto-Draft Message" column to review and send.`
+      : `✅ All good! No follow-ups due today. Check back in a couple of days.`;
+    SpreadsheetApp.getUi().alert(msg);
+  }
 }
 
 function generateDraftMessage(clientName, project, settings, type) {
@@ -383,7 +385,7 @@ function setupTriggers() {
 }
 
 function dailyCheck() {
-  generateAllFollowups();
+  generateAllFollowups(true); // silent=true: skip UI alerts, safe for triggers
   sendEmailDigest();
 }
 
