@@ -567,7 +567,7 @@
 
     google.script.run
       .withSuccessHandler(draft => {
-        box.innerHTML = `<div class="draft-text" id="draft-text-${idx}">${escapeHtml(draft)}</div>
+        box.innerHTML = `<div class="draft-text" id="draft-text-${idx}">${escapeHtml(cleanDraft(draft))}</div>
                          <button class="copy-btn" onclick="copyDraft(${idx})">📋 Copy to Clipboard</button>`;
         const toggleText = document.getElementById(`draft-toggle-text-${idx}`);
         if (toggleText) toggleText.textContent = 'View Draft';

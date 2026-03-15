@@ -1,5 +1,5 @@
 // ============================================================
-// ANTI-GHOST FOLLOW-UP AUTOMATOR
+// GHOST-PROOF FOLLOW-UP AUTOMATOR
 // By: Your Name | Free Forever | Google Sheets + Apps Script
 // ============================================================
 
@@ -48,10 +48,10 @@ function firstTimeSetup() {
   setupTriggers();
 
   SpreadsheetApp.getUi().alert(
-    "✅ Anti-Ghost Setup Complete!\n\nYour sheets are ready.\n\n" +
+    "✅ Ghost-Proof Setup Complete!\n\nYour sheets are ready.\n\n" +
     "1. Go to the 'Proposals' sheet\n" +
     "2. Add your client proposals\n" +
-    "3. Open 'Anti-Ghost > Open Dashboard' to manage follow-ups\n\n" +
+    "3. Open 'Ghost-Proof > Open Dashboard' to manage follow-ups\n\n" +
     "The automator will check for follow-ups daily at 8 AM."
   );
 }
@@ -128,7 +128,7 @@ function setupSettingsSheet(ss) {
   else sheet = ss.insertSheet(SETTINGS_SHEET);
 
   const settings = [
-    ["⚙️ ANTI-GHOST SETTINGS", ""],
+    ["⚙️ GHOST-PROOF SETTINGS", ""],
     ["", ""],
     ["Your Name", "Your Name Here"],
     ["Your Email", "youremail@gmail.com"],
@@ -207,7 +207,7 @@ function generateAllFollowups(silent) {
     lastFollowup.setHours(0, 0, 0, 0);
 
     const followupCount = parseInt(row[COL.FOLLOWUP_COUNT - 1]) || 0;
-    const daysSinceLastContact = Math.floor((today - lastFollowup) / 86400000);
+    const daysSinceLastContact = Math.round((today - lastFollowup) / 86400000);
     const nextFollowupDate = new Date(lastFollowup);
     nextFollowupDate.setDate(nextFollowupDate.getDate() + settings.interval);
 
@@ -224,7 +224,11 @@ function generateAllFollowups(silent) {
 
       const draft = generateDraftMessage(clientName, projectTitle, settings, msgType);
       sheet.getRange(i + 1, COL.AUTO_DRAFT).setValue(`[${msgType}]\n${draft}`);
-      sheet.getRange(i + 1, COL.STATUS).setValue("⏳ Waiting");
+      
+      // Do not overwrite manual In Talks pipeline status
+      if (status !== "🤝 In Talks") {
+        sheet.getRange(i + 1, COL.STATUS).setValue("⏳ Waiting");
+      }
 
       updatedCount++;
     }
@@ -280,7 +284,8 @@ function getSettings(settingsSheet) {
     yourEmail: map["Your Email"] || "",
     interval: parseInt(map["Follow-up Interval (days)"]) || 3,
     maxFollowups: parseInt(map["Max Follow-ups Before 'Break-up'"]) || 4,
-    sendEmailAlerts: map["Send Email Alerts?"] === "YES",
+    // safe check for Yes, YES, yes, etc.
+    sendEmailAlerts: String(map["Send Email Alerts?"] || "").toUpperCase() === "YES",
     friendlySubject: map["[FRIENDLY] Subject"] || "",
     friendlyBody: map["[FRIENDLY] Body"] || "",
     professionalSubject: map["[PROFESSIONAL] Subject"] || "",
@@ -322,7 +327,7 @@ function refreshHeatmap() {
     if (!lastContact) continue;
     lastContact.setHours(0, 0, 0, 0);
 
-    const daysSince = Math.floor((today - lastContact) / 86400000);
+    const daysSince = Math.round((today - lastContact) / 86400000);
     const urgency = daysSince / settings.interval;
 
     let heat, bg;
@@ -342,6 +347,9 @@ function refreshHeatmap() {
 function markAsFollowedUp() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_NAME);
+  const settingsSheet = ss.getSheetByName(SETTINGS_SHEET);
+  const settings = settingsSheet ? getSettings(settingsSheet) : { interval: 3 };
+  
   const selection = sheet.getActiveRange();
   const row = selection.getRow();
 
@@ -356,7 +364,7 @@ function markAsFollowedUp() {
   sheet.getRange(row, COL.AUTO_DRAFT).setValue(""); // Clear old draft
 
   const nextDate = new Date(today);
-  nextDate.setDate(nextDate.getDate() + 3);
+  nextDate.setDate(nextDate.getDate() + settings.interval);
   sheet.getRange(row, COL.NEXT_FOLLOWUP).setValue(nextDate);
 
   // Log it
@@ -364,7 +372,7 @@ function markAsFollowedUp() {
     sheet.getRange(row, COL.PROJECT).getValue(), "Followed Up", currentCount + 1, "Manual");
 
   refreshHeatmap();
-  SpreadsheetApp.getUi().alert("✅ Marked as followed up! Next reminder in 3 days.");
+  SpreadsheetApp.getUi().alert(`✅ Marked as followed up! Next reminder scheduled in ${settings.interval} days.`);
 }
 
 function logActivity(ss, client, project, action, count, type) {
@@ -409,6 +417,7 @@ function sendEmailDigest() {
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[COL.CLIENT - 1]) continue;
+    // Safely skip any leads that are closed out
     if (["✅ Won", "❌ Lost", "👻 Ghosted"].includes(row[COL.STATUS - 1])) continue;
 
     const lastContact = row[COL.LAST_FOLLOWUP - 1]
@@ -418,7 +427,7 @@ function sendEmailDigest() {
     if (!lastContact) continue;
     lastContact.setHours(0, 0, 0, 0);
 
-    const daysSince = Math.floor((today - lastContact) / 86400000);
+    const daysSince = Math.round((today - lastContact) / 86400000);
     if (daysSince >= settings.interval) {
       dueToday.push({ client: row[COL.CLIENT - 1], project: row[COL.PROJECT - 1], days: daysSince });
     }
@@ -427,7 +436,7 @@ function sendEmailDigest() {
   if (dueToday.length === 0) return;
 
   const sheetUrl = ss.getUrl();
-  let html = `<h2>👻 Anti-Ghost Daily Digest</h2>
+  let html = `<h2>👻 Ghost-Proof Daily Digest</h2>
     <p>You have <strong>${dueToday.length} follow-up(s)</strong> due today!</p>
     <table border="1" cellpadding="8" style="border-collapse:collapse; font-family:Arial;">
     <tr style="background:#1a1a2e; color:#e94560;">
@@ -440,16 +449,16 @@ function sendEmailDigest() {
 
   html += `</table><br/>
     <a href="${sheetUrl}" style="background:#e94560; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;">
-      Open Anti-Ghost Sheet →
+      Open Ghost-Proof Sheet →
     </a>`;
 
-  GmailApp.sendEmail(settings.yourEmail, `👻 ${dueToday.length} Follow-up(s) Due Today – Anti-Ghost`, "", { htmlBody: html });
+  GmailApp.sendEmail(settings.yourEmail, `👻 ${dueToday.length} Follow-up(s) Due Today – Ghost-Proof`, "", { htmlBody: html });
 }
 
 // ── DASHBOARD SIDEBAR ─────────────────────────────────────────
 function openDashboard() {
   const html = HtmlService.createHtmlOutputFromFile("Dashboard")
-    .setTitle("🚀 Anti-Ghost Dashboard")
+    .setTitle("🚀 Ghost-Proof Dashboard")
     .setWidth(400);
   SpreadsheetApp.getUi().showSidebar(html);
 }
@@ -481,6 +490,7 @@ function getDashboardData() {
 
     const status = row[COL.STATUS - 1];
     if (status === "✅ Won") { stats.won++; continue; }
+    if (status === "❌ Lost") { continue; } // Exclude lost proposals from active counting
     if (status === "👻 Ghosted") { stats.ghosted++; continue; }
     if (status === "🤝 In Talks") stats.inTalks++;
 
@@ -490,7 +500,7 @@ function getDashboardData() {
 
     if (!lastContact) continue;
     lastContact.setHours(0, 0, 0, 0);
-    const daysSince = Math.floor((today - lastContact) / 86400000);
+    const daysSince = Math.round((today - lastContact) / 86400000);
 
     const isDue = daysSince >= settings.interval;
     const followupCount = parseInt(row[COL.FOLLOWUP_COUNT - 1]) || 0;
@@ -519,6 +529,9 @@ function getDashboardData() {
 function markRowFollowedUp(rowIndex) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(SHEET_NAME);
+  const settingsSheet = ss.getSheetByName(SETTINGS_SHEET);
+  const settings = settingsSheet ? getSettings(settingsSheet) : { interval: 3 };
+  
   const today = new Date();
   const currentCount = parseInt(sheet.getRange(rowIndex, COL.FOLLOWUP_COUNT).getValue()) || 0;
 
@@ -528,7 +541,7 @@ function markRowFollowedUp(rowIndex) {
   sheet.getRange(rowIndex, COL.AUTO_DRAFT).setValue("");
 
   const nextDate = new Date(today);
-  nextDate.setDate(nextDate.getDate() + 3);
+  nextDate.setDate(nextDate.getDate() + settings.interval);
   sheet.getRange(rowIndex, COL.NEXT_FOLLOWUP).setValue(nextDate);
 
   logActivity(ss, sheet.getRange(rowIndex, COL.CLIENT).getValue(),
@@ -553,6 +566,8 @@ function generateDraftForRow(rowIndex) {
                 : "PROFESSIONAL";
 
   const draft = generateDraftMessage(clientName, project, settings, msgType);
-  sheet.getRange(rowIndex, COL.AUTO_DRAFT).setValue(`[${msgType}]\n${draft}`);
-  return draft;
+  const fullText = `[${msgType}]\n${draft}`;
+  
+  sheet.getRange(rowIndex, COL.AUTO_DRAFT).setValue(fullText);
+  return fullText;
 }
