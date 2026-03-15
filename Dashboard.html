@@ -63,6 +63,7 @@
     font-weight: 800;
     background: linear-gradient(135deg, #e94560, #533483);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     letter-spacing: -0.5px;
   }
@@ -491,20 +492,23 @@
         </div>`;
     } else {
       dueList.forEach((item, idx) => {
-        const urgencyClass = item.days >= 10 ? 'urgent' : item.days >= 6 ? 'warning' : 'due';
+        const interval = dashData.settings.interval || 3;
+        const factor = item.days / interval;
+        const urgencyClass = factor >= 3 ? 'urgent' : factor >= 2 ? 'warning' : 'due';
         const typeClass = item.msgType === 'Friendly' ? 'type-friendly'
                         : item.msgType === 'Professional' ? 'type-professional'
                         : 'type-breakup';
         const hasDraft = item.draft && item.draft.trim().length > 0;
+        const displayAmount = isNaN(Number(item.amount)) ? escapeHtml(String(item.amount)) : '$' + Number(item.amount).toLocaleString();
 
         html += `
           <div class="proposal-card ${urgencyClass}" id="card-${idx}">
             <div class="card-header">
               <div>
-                <div class="client-name">${item.client}</div>
-                <div class="project-title">${item.project}</div>
+                <div class="client-name">${escapeHtml(item.client)}</div>
+                <div class="project-title">${escapeHtml(item.project)}</div>
               </div>
-              ${item.amount ? `<div class="amount-badge">$${Number(item.amount).toLocaleString()}</div>` : ''}
+              ${item.amount ? `<div class="amount-badge">${displayAmount}</div>` : ''}
             </div>
             <div class="card-meta">
               <span class="meta-pill fire">⏰ ${item.days}d since contact</span>
