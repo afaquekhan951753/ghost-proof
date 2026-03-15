@@ -632,7 +632,7 @@
         document.querySelector('.btn-run-all').textContent = '⚡ Run All Follow-ups';
         document.querySelector('.btn-run-all').disabled = false;
       })
-      .generateAllFollowups();
+      .generateAllFollowups(true); // run silently when triggered from sidebar
   }
 
   function showToast(msg) {

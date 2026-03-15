@@ -198,7 +198,7 @@ function generateAllFollowups(silent) {
     if (!row[COL.CLIENT - 1]) continue;
 
     const status = row[COL.STATUS - 1];
-    if (["✅ Won", "❌ Lost"].includes(status)) continue;
+    if (["✅ Won", "❌ Lost", "👻 Ghosted"].includes(status)) continue;
 
     const proposalDate = row[COL.PROPOSAL_DATE - 1];
     if (!proposalDate) continue;
@@ -239,6 +239,8 @@ function generateAllFollowups(silent) {
       : `✅ All good! No follow-ups due today. Check back in a couple of days.`;
     SpreadsheetApp.getUi().alert(msg);
   }
+
+  return { updated: updatedCount };
 }
 
 function generateDraftMessage(clientName, project, settings, type) {
@@ -407,7 +409,7 @@ function sendEmailDigest() {
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
     if (!row[COL.CLIENT - 1]) continue;
-    if (["✅ Won", "❌ Lost"].includes(row[COL.STATUS - 1])) continue;
+    if (["✅ Won", "❌ Lost", "👻 Ghosted"].includes(row[COL.STATUS - 1])) continue;
 
     const lastContact = row[COL.LAST_FOLLOWUP - 1]
       ? new Date(row[COL.LAST_FOLLOWUP - 1])
